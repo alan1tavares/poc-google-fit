@@ -8,106 +8,120 @@
 
 import React from 'react';
 import {
-  SafeAreaView,
   StyleSheet,
-  ScrollView,
   View,
   Text,
-  StatusBar,
+  Button,
+  Alert,
+  Switch,
+  FlatList,
 } from 'react-native';
 
-import {
-  Header,
-  LearnMoreLinks,
-  Colors,
-  DebugInstructions,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import GoogleFit, {Scopes} from 'react-native-google-fit';
 
-const App: () => React$Node = () => {
+const handleGetCredentials = () => {
+  const options = {
+    scopes: [
+      Scopes.FITNESS_ACTIVITY_READ,
+      Scopes.FITNESS_ACTIVITY_WRITE,
+      Scopes.FITNESS_BODY_READ,
+      Scopes.FITNESS_BODY_WRITE,
+    ],
+  };
+
+  GoogleFit.authorize(options)
+    .then((authResult) => {
+      if (authResult.success) {
+        Alert.alert('Está autorizado');
+      } else {
+        Alert.alert('Não está autorizado');
+      }
+    })
+    .catch(() => {
+      Alert.alert('Deu erro');
+    });
+};
+
+const _Button = ({onPress, title}) => {
+  return (
+    <View style={styles.button}>
+      <Button onPress={onPress} title={title} />
+    </View>
+  );
+};
+
+const Card = ({item, index, separators}) => {
+  return (
+    <View style={styles.card}>
+      <Text>Data: {item.startDate}</Text>
+      <Text>Peso: {item.value}</Text>
+    </View>
+  );
+};
+
+const item = {
+  startDate: '12/10/2020',
+  value: 30,
+  key: 1,
+};
+
+const App = () => {
+  const [isAuthorized, setIsAuthorized] = React.useState(false);
+  const [data, setData] = React.useState([item]);
+
+  GoogleFit.checkIsAuthorized().then(() => {
+    setIsAuthorized(GoogleFit.isAuthorized);
+  });
+
+  const handleGetPeso = () => {
+    const opt = {
+      unit: 'kg', // required; default 'kg'
+      startDate: '2017-01-01T00:00:17.971Z', // required
+      endDate: new Date().toISOString(), // required
+      bucketUnit: 'DAY', // optional - default "DAY". Valid values: "NANOSECOND" | "MICROSECOND" | "MILLISECOND" | "SECOND" | "MINUTE" | "HOUR" | "DAY"
+      bucketInterval: 1, // optional - default 1.
+      ascending: false, // optional; default false
+    };
+  
+    GoogleFit.getWeightSamples(opt).then((res) => {
+      setData(res);
+      console.log('peso', res);
+    });
+  };
+
   return (
     <>
-      <StatusBar barStyle="dark-content" />
-      <SafeAreaView>
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
-          style={styles.scrollView}>
-          <Header />
-          {global.HermesInternal == null ? null : (
-            <View style={styles.engine}>
-              <Text style={styles.footer}>Engine: Hermes</Text>
-            </View>
-          )}
-          <View style={styles.body}>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Step One</Text>
-              <Text style={styles.sectionDescription}>
-                Edit <Text style={styles.highlight}>App.js</Text> to change this
-                screen and then come back to see your edits.
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>See Your Changes</Text>
-              <Text style={styles.sectionDescription}>
-                <ReloadInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Debug</Text>
-              <Text style={styles.sectionDescription}>
-                <DebugInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Learn More</Text>
-              <Text style={styles.sectionDescription}>
-                Read the docs to discover what to do next:
-              </Text>
-            </View>
-            <LearnMoreLinks />
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+      <View style={styles.container}>
+        <Switch
+          thumbColor={isAuthorized ? '#f5dd4b' : '#f4f3f4'}
+          value={isAuthorized}
+        />
+        <_Button
+          title="Get Credentials"
+          onPress={() => handleGetCredentials()}
+        />
+        <_Button title="Get Weight" onPress={() => handleGetPeso()} />
+        <Text>Hello World</Text>
+
+        <FlatList data={data} renderItem={Card}/>
+      </View>
     </>
   );
 };
 
 const styles = StyleSheet.create({
-  scrollView: {
-    backgroundColor: Colors.lighter,
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    marginHorizontal: 16,
+    alignItems: 'center',
   },
-  engine: {
-    position: 'absolute',
-    right: 0,
+
+  button: {
+    marginVertical: 10,
   },
-  body: {
-    backgroundColor: Colors.white,
-  },
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: Colors.black,
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-    color: Colors.dark,
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-  footer: {
-    color: Colors.dark,
-    fontSize: 12,
-    fontWeight: '600',
-    padding: 4,
-    paddingRight: 12,
-    textAlign: 'right',
+  card: {
+    borderWidth: 1,
   },
 });
 
