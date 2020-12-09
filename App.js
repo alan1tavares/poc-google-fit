@@ -7,82 +7,65 @@
  */
 
 import React from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  Button,
-  Alert,
-  Switch,
-  FlatList,
-} from 'react-native';
+import {StyleSheet, View, Text, Alert, Switch, FlatList} from 'react-native';
+
+import FitButton from './src/components';
 
 import GoogleFit, {Scopes} from 'react-native-google-fit';
 
-const handleGetCredentials = () => {
-  const options = {
-    scopes: [
-      Scopes.FITNESS_ACTIVITY_READ,
-      Scopes.FITNESS_ACTIVITY_WRITE,
-      Scopes.FITNESS_BODY_READ,
-      Scopes.FITNESS_BODY_WRITE,
-    ],
-  };
-
-  GoogleFit.authorize(options)
-    .then((authResult) => {
-      if (authResult.success) {
-        Alert.alert('Está autorizado');
-      } else {
-        Alert.alert('Não está autorizado');
-      }
-    })
-    .catch(() => {
-      Alert.alert('Deu erro');
-    });
-};
-
-const _Button = ({onPress, title}) => {
+const Item = ({item}) => {
   return (
-    <View style={styles.button}>
-      <Button onPress={onPress} title={title} />
-    </View>
-  );
-};
-
-const Card = ({item, index, separators}) => {
-  return (
-    <View style={styles.card}>
+    <View style={styles.item}>
       <Text>Data: {item.startDate}</Text>
       <Text>Peso: {item.value}</Text>
     </View>
   );
 };
 
-const item = {
-  startDate: '12/10/2020',
-  value: 30,
-  key: 1,
-};
-
 const App = () => {
   const [isAuthorized, setIsAuthorized] = React.useState(false);
-  const [data, setData] = React.useState([item]);
+  const [data, setData] = React.useState([]);
 
   GoogleFit.checkIsAuthorized().then(() => {
     setIsAuthorized(GoogleFit.isAuthorized);
+    console.log(GoogleFit.isAuthorized);
   });
+
+  const handleGetCredentials = () => {
+    const options = {
+      scopes: [
+        Scopes.FITNESS_ACTIVITY_READ,
+        Scopes.FITNESS_ACTIVITY_WRITE,
+        Scopes.FITNESS_BODY_READ,
+        Scopes.FITNESS_BODY_WRITE,
+      ],
+    };
+
+    GoogleFit.authorize(options)
+      .then((authResult) => {
+        if (authResult.success) {
+          Alert.alert('Está autorizado');
+        } else {
+          Alert.alert('Não está autorizado');
+        }
+        setIsAuthorized(authResult.success);
+      })
+      .catch(() => {
+        Alert.alert('Deu erro');
+        setIsAuthorized(false);
+      });
+  };
 
   const handleGetPeso = () => {
     const opt = {
-      unit: 'kg', // required; default 'kg'
-      startDate: '2017-01-01T00:00:17.971Z', // required
-      endDate: new Date().toISOString(), // required
-      bucketUnit: 'DAY', // optional - default "DAY". Valid values: "NANOSECOND" | "MICROSECOND" | "MILLISECOND" | "SECOND" | "MINUTE" | "HOUR" | "DAY"
-      bucketInterval: 1, // optional - default 1.
-      ascending: false, // optional; default false
+      unit: 'kg',
+      startDate: '2017-01-01T00:00:17.971Z',
+      endDate: new Date().toISOString(),
+      bucketUnit: 'DAY',
+      bucketInterval: 1,
+      ascending: false,
     };
-  
+
     GoogleFit.getWeightSamples(opt).then((res) => {
       setData(res);
       console.log('peso', res);
@@ -92,18 +75,23 @@ const App = () => {
   return (
     <>
       <View style={styles.container}>
-        <Switch
-          thumbColor={isAuthorized ? '#f5dd4b' : '#f4f3f4'}
-          value={isAuthorized}
-        />
-        <_Button
-          title="Get Credentials"
-          onPress={() => handleGetCredentials()}
-        />
-        <_Button title="Get Weight" onPress={() => handleGetPeso()} />
-        <Text>Hello World</Text>
+        <View>
+          <Switch
+            thumbColor={isAuthorized ? '#f5dd4b' : '#f4f3f4'}
+            value={isAuthorized}
+          />
+          <FitButton
+            title="Get Credentials"
+            onPress={() => handleGetCredentials()}
+          />
+          <FitButton title="Get Weight" onPress={() => handleGetPeso()} />
+        </View>
 
-        <FlatList data={data} renderItem={Card}/>
+        <FlatList
+          data={data}
+          renderItem={Item}
+          keyExtractor={(data) => data.endDate}
+        />
       </View>
     </>
   );
@@ -112,16 +100,13 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    marginHorizontal: 16,
-    alignItems: 'center',
+    marginTop: 30,
+    marginHorizontal: 30,
   },
-
-  button: {
-    marginVertical: 10,
-  },
-  card: {
+  item: {
     borderWidth: 1,
+    marginVertical: 5,
+    padding: 10,
   },
 });
 
